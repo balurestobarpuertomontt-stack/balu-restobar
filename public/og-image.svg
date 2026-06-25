@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f0f0f"/>
+  <rect x="0" y="400" width="1200" height="230" fill="#1a1a1a"/>
+  <text x="600" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="96" font-weight="bold" fill="#c9a227">Balu Restobar</text>
+  <text x="600" y="340" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#888" font-style="italic">El sabor que reúne amigos</text>
+  <text x="600" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#666">Quillota 180 · Puerto Montt, Chile</text>
+</svg>
