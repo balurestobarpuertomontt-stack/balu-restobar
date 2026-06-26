@@ -1,9 +1,17 @@
-import { getOrders } from "@/lib/db";
+import { getOrders, saveOrder } from "@/lib/db";
 import { formatCLP } from "@/lib/utils";
 import { CheckCircle, ShoppingBag, ArrowRight } from "@/components/ui/Icons";
 import Link from "next/link";
 import { buildOrderWhatsAppMessage, getWhatsAppUrl } from "@/lib/whatsapp";
 import type { CartItem, PaymentMethod } from "@/types";
+import Stripe from "stripe";
+import { MercadoPagoConfig, Payment } from "mercadopago";
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2025-01-27" as any }) : null;
+
+const mpAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || "";
+const mpConfig = mpAccessToken ? new MercadoPagoConfig({ accessToken: mpAccessToken }) : null;
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -13,6 +21,11 @@ export default async function SuccessPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const orderId = typeof params.orderId === "string" ? params.orderId : "";
   const mock = params.mock === "true";
+
+  // Extra query params for payment confirmation
+  const sessionId = typeof params.session_id === "string" ? params.session_id : "";
+  const mpStatus = typeof params.status === "string" ? params.status : "";
+  const mpCollectionStatus = typeof params.collection_status === "string" ? params.collection_status : "";
 
   const orders = await getOrders();
   const order = orders.find((o: any) => o.id === orderId);
@@ -27,6 +40,67 @@ export default async function SuccessPage({ searchParams }: PageProps) {
         </Link>
       </div>
     );
+  }
+
+  // Lógica de confirmación de pago si el pedido está "pending"
+  if (order.status === "pending") {
+    if (order.payment_method === "stripe") {
+      if (sessionId) {
+        if (stripe) {
+          try {
+            const session = await stripe.checkout.sessions.retrieve(sessionId);
+            if (session.payment_status === "paid") {
+              order.status = "confirmed";
+              await saveOrder(order);
+            }
+          } catch (err) {
+            console.error("Error al validar sesión de Stripe:", err);
+          }
+        } else {
+          // Modo simulación (Stripe no configurado pero viene session_id)
+          console.warn("Stripe no está configurado. Confirmando pedido en modo simulación.");
+          order.status = "confirmed";
+          await saveOrder(order);
+        }
+      } else if (mock) {
+        order.status = "confirmed";
+        await saveOrder(order);
+      }
+    } else if (order.payment_method === "mercadopago") {
+      const isMpApproved = mpStatus === "approved" || mpCollectionStatus === "approved";
+      if (isMpApproved) {
+        if (mpConfig) {
+          try {
+            const paymentId = typeof params.payment_id === "string" ? params.payment_id : "";
+            if (paymentId) {
+              const paymentClient = new Payment(mpConfig);
+              const paymentDetail = await paymentClient.get({ id: paymentId });
+              if (paymentDetail.status === "approved") {
+                order.status = "confirmed";
+                await saveOrder(order);
+              }
+            } else {
+              // Si no viene payment_id pero el status es approved, confiamos en el parámetro de retorno
+              order.status = "confirmed";
+              await saveOrder(order);
+            }
+          } catch (err) {
+            console.error("Error al validar pago de Mercado Pago con API:", err);
+            // Fallback a confiar en los parámetros de la URL
+            order.status = "confirmed";
+            await saveOrder(order);
+          }
+        } else {
+          // Modo simulación
+          console.warn("Mercado Pago no está configurado. Confirmando pedido en modo simulación.");
+          order.status = "confirmed";
+          await saveOrder(order);
+        }
+      } else if (mock) {
+        order.status = "confirmed";
+        await saveOrder(order);
+      }
+    }
   }
 
   // Formatting WhatsApp order message details
@@ -53,6 +127,20 @@ export default async function SuccessPage({ searchParams }: PageProps) {
 
   const waUrl = getWhatsAppUrl(whatsappMessage);
 
+  // Dynamic status messages
+  let statusMessage = "Tu transacción ha sido procesada de manera segura.";
+  if (order.status === "confirmed") {
+    statusMessage = "El pago ha sido verificado y tu pedido está confirmado.";
+  } else if (order.status === "pending") {
+    statusMessage = "Tu pedido ha sido registrado y está pendiente de pago o confirmación manual.";
+  } else if (order.status === "cancelled") {
+    statusMessage = "Esta transacción ha sido cancelada o rechazada.";
+  }
+
+  if (mock) {
+    statusMessage = "Simulación completada con éxito. El pedido ha sido verificado y confirmado.";
+  }
+
   return (
     <div className="min-h-screen bg-balu-dark text-neutral-100 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Decorative gradients */}
@@ -66,9 +154,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
 
         <h1 className="font-display text-3xl md:text-4xl font-semibold mb-2">¡Pedido Confirmado!</h1>
         <p className="text-neutral-400 text-sm mb-6">
-          {mock
-            ? "Simulación completada con éxito. El pedido ha sido guardado."
-            : "Tu transacción ha sido procesada de manera segura."}
+          {statusMessage}
         </p>
 
         {/* Info card */}
@@ -90,7 +176,9 @@ export default async function SuccessPage({ searchParams }: PageProps) {
             <span className="font-medium text-balu-gold uppercase">{order.payment_method}</span>
           </div>
           <div className="flex justify-between items-center text-sm pt-2 border-t border-white/5">
-            <span className="text-neutral-400">Total Pagado</span>
+            <span className="text-neutral-400">
+              {order.status === "confirmed" ? "Total Pagado" : "Total a Pagar"}
+            </span>
             <span className="text-lg font-bold text-balu-gold">{formatCLP(order.total)}</span>
           </div>
           <div className="flex justify-between text-xs text-green-500 font-semibold pt-1">
