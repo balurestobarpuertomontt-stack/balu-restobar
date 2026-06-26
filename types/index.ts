@@ -15,6 +15,9 @@ export interface MenuItem {
   category: MenuCategory;
   image?: string;
   popular?: boolean;
+  rappi_price?: number;
+  toteat_price?: number;
+  synced_at?: string;
 }
 
 export interface CartItem extends MenuItem {
@@ -77,5 +80,5 @@ export interface GalleryItem {
   src: string;
   alt: string;
   category: "comidas" | "cocteles" | "clientes" | "eventos" | "local";
-  height: "short" | "medium" | "tall";
+  height?: "short" | "medium" | "tall";
 }

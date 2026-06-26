@@ -46,20 +46,71 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
     };
 
     try {
-      await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-    } catch {
-      // Supabase optional
+      if (payment === "whatsapp" || payment === "transferencia") {
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        });
+        
+        if (res.ok) {
+          const json = await res.json();
+          const orderId = json.data?.id || "";
+          store.clearCart();
+          onClose();
+          window.location.href = `/checkout/success?orderId=${orderId}&method=${payment}`;
+        } else {
+          throw new Error("Error creating order");
+        }
+      } else if (payment === "stripe") {
+        const res = await fetch("/api/checkout/stripe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          store.clearCart();
+          onClose();
+          window.location.href = json.url;
+        } else {
+          throw new Error("Stripe error");
+        }
+      } else if (payment === "webpay") {
+        const res = await fetch("/api/checkout/webpay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          store.clearCart();
+          onClose();
+          // Transbank redirect format: URL + ?token_ws=token
+          window.location.href = `${json.url}?token_ws=${json.token}`;
+        } else {
+          throw new Error("Webpay error");
+        }
+      } else if (payment === "mercadopago") {
+        const res = await fetch("/api/checkout/mercadopago", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          store.clearCart();
+          onClose();
+          window.location.href = json.url;
+        } else {
+          throw new Error("Mercado Pago error");
+        }
+      }
+    } catch (error) {
+      console.error("Payment redirect failed:", error);
+      alert("Hubo un problema al iniciar el pago. Por favor intenta nuevamente.");
+      setLoading(false);
     }
-
-    const message = buildOrderWhatsAppMessage(orderData);
-    window.open(getWhatsAppUrl(message), "_blank");
-    store.clearCart();
-    setLoading(false);
-    onClose();
   };
 
   return (

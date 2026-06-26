@@ -1,28 +1,26 @@
 import { NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { saveReservation } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.from("reservations").insert({
-        name: body.name,
-        email: body.email,
-        phone: body.phone,
-        date: body.date,
-        time: body.time,
-        guests: parseInt(body.guests, 10),
-        notes: body.notes ?? null,
-      });
+    const reservationData = {
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      date: body.date,
+      time: body.time,
+      guests: parseInt(body.guests, 10),
+      notes: body.notes ?? null,
+    };
 
-      if (error) {
-        console.error("Supabase reservation error:", error);
-      }
-    }
+    const saved = await saveReservation(reservationData);
 
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ success: true, data: saved });
+  } catch (error: any) {
+    console.error("Reservation error:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

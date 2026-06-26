@@ -1,32 +1,31 @@
 import { NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { saveOrder } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.from("orders").insert({
-        customer_name: body.customerName,
-        customer_address: body.customerAddress,
-        items: body.items,
-        subtotal: body.subtotal,
-        discount: body.discount ?? 0,
-        tip: body.tip ?? 0,
-        delivery_fee: body.delivery ?? 0,
-        total: body.total,
-        payment_method: body.paymentMethod,
-        coupon_code: body.couponCode ?? null,
-        loyalty_points_earned: Math.floor(body.total / 1000) * 10,
-      });
+    const orderData = {
+      customer_name: body.customerName,
+      customer_address: body.customerAddress,
+      customer_phone: body.customerPhone || null,
+      items: body.items,
+      subtotal: body.subtotal,
+      discount: body.discount ?? 0,
+      tip: body.tip ?? 0,
+      delivery_fee: body.delivery ?? 0,
+      total: body.total,
+      payment_method: body.paymentMethod,
+      coupon_code: body.couponCode ?? null,
+      loyalty_points_earned: Math.floor(body.total / 1000) * 10,
+    };
 
-      if (error) {
-        console.error("Supabase order error:", error);
-      }
-    }
+    const saved = await saveOrder(orderData);
 
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ success: true, data: saved });
+  } catch (error: any) {
+    console.error("Order creation error:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

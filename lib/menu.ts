@@ -1,5 +1,5 @@
 import { MENU_ITEMS, MENU_CATEGORIES } from "@/lib/menu-data";
-import { createServerSupabase, isServerSupabaseConfigured } from "@/lib/supabase/server";
+import { getProducts, isDbSupabaseEnabled } from "@/lib/db";
 import type { MenuCategory, MenuItem } from "@/types";
 
 interface ProductRow {
@@ -12,6 +12,9 @@ interface ProductRow {
   image_url: string | null;
   popular: boolean | null;
   active: boolean | null;
+  rappi_price?: number | null;
+  toteat_price?: number | null;
+  synced_at?: string | null;
 }
 
 function mapProductToMenuItem(row: ProductRow): MenuItem {
@@ -23,6 +26,9 @@ function mapProductToMenuItem(row: ProductRow): MenuItem {
     category: row.category as MenuCategory,
     image: row.image_url ?? undefined,
     popular: row.popular ?? undefined,
+    rappi_price: row.rappi_price ?? undefined,
+    toteat_price: row.toteat_price ?? undefined,
+    synced_at: row.synced_at ?? undefined,
   };
 }
 
@@ -36,8 +42,7 @@ export function getMenuCategories(): readonly MenuCategory[] {
 }
 
 /**
- * Loads menu from Supabase when configured, otherwise returns static menu-data.
- * Safe to call without any external credentials.
+ * Loads menu from database (Supabase or local JSON).
  */
 export async function getMenuItems(): Promise<MenuItem[]> {
   const { items } = await getMenuWithSource();
@@ -46,35 +51,28 @@ export async function getMenuItems(): Promise<MenuItem[]> {
 
 export async function getMenuWithSource(): Promise<{
   items: MenuItem[];
-  source: "supabase" | "static";
+  source: "supabase" | "local" | "static";
 }> {
-  if (!isServerSupabaseConfigured()) {
+  try {
+    const products = await getProducts();
+    const activeProducts = products.filter((row: any) => row.active !== false);
+
+    if (activeProducts.length === 0) {
+      return { items: MENU_ITEMS, source: "static" };
+    }
+
+    return {
+      items: activeProducts.map((row) => mapProductToMenuItem(row as ProductRow)),
+      source: isDbSupabaseEnabled() ? "supabase" : "local",
+    };
+  } catch (err) {
+    console.error("Error fetching menu items:", err);
     return { items: MENU_ITEMS, source: "static" };
   }
-
-  const supabase = createServerSupabase();
-  if (!supabase) {
-    return { items: MENU_ITEMS, source: "static" };
-  }
-
-  const { data, error } = await supabase
-    .from("products")
-    .select("id, slug, name, description, price, category, image_url, popular, active")
-    .eq("active", true)
-    .order("category")
-    .order("name");
-
-  if (error || !data?.length) {
-    return { items: MENU_ITEMS, source: "static" };
-  }
-
-  return {
-    items: data.map((row) => mapProductToMenuItem(row as ProductRow)),
-    source: "supabase",
-  };
 }
 
-export async function getMenuSource(): Promise<"supabase" | "static"> {
+export async function getMenuSource(): Promise<"supabase" | "local" | "static"> {
   const { source } = await getMenuWithSource();
   return source;
 }
+

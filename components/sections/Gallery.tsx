@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import type { GalleryItem } from "@/types";
 
-const GALLERY: GalleryItem[] = [
-  { id: "1", src: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80", alt: "Tabla de carnes", category: "comidas", height: "tall" },
-  { id: "2", src: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80", alt: "Cócteles", category: "cocteles", height: "medium" },
-  { id: "3", src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80", alt: "Ambiente del local", category: "local", height: "short" },
-  { id: "4", src: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80", alt: "Burger premium", category: "comidas", height: "medium" },
-  { id: "5", src: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", alt: "Old fashioned", category: "cocteles", height: "tall" },
-  { id: "6", src: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80", alt: "Evento en vivo", category: "eventos", height: "medium" },
-  { id: "7", src: "https://images.unsplash.com/photo-1528607929212-26305ec22053?w=600&q=80", alt: "Clientes disfrutando", category: "clientes", height: "short" },
-  { id: "8", src: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80", alt: "Bar", category: "local", height: "tall" },
-  { id: "9", src: "https://images.unsplash.com/photo-1535399833047-9de6f81d427?w=600&q=80", alt: "Ceviche", category: "comidas", height: "medium" },
+const STATIC_GALLERY: GalleryItem[] = [
+  { id: "1", src: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80", alt: "Tabla de carnes", category: "comidas" },
+  { id: "2", src: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80", alt: "Cócteles", category: "cocteles" },
+  { id: "3", src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80", alt: "Ambiente del local", category: "local" },
+  { id: "4", src: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80", alt: "Burger premium", category: "comidas" },
+  { id: "5", src: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", alt: "Old fashioned", category: "cocteles" },
+  { id: "6", src: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80", alt: "Evento en vivo", category: "eventos" },
+  { id: "7", src: "https://images.unsplash.com/photo-1528607929212-26305ec22053?w=600&q=80", alt: "Clientes disfrutando", category: "clientes" },
+  { id: "8", src: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80", alt: "Bar", category: "local" },
+  { id: "9", src: "https://images.unsplash.com/photo-1535399833047-9de6f81d427?w=600&q=80", alt: "Ceviche", category: "comidas" },
 ];
 
 const FILTERS = ["todos", "comidas", "cocteles", "clientes", "eventos", "local"] as const;
@@ -27,11 +27,34 @@ const FILTER_LABELS: Record<string, string> = {
   local: "Local",
 };
 
-const heightClass = { short: "row-span-1", medium: "row-span-2", tall: "row-span-3" };
-
 export default function Gallery() {
+  const [items, setItems] = useState<GalleryItem[]>(STATIC_GALLERY);
   const [filter, setFilter] = useState<string>("todos");
-  const items = filter === "todos" ? GALLERY : GALLERY.filter((g) => g.category === filter);
+
+  useEffect(() => {
+    async function loadGallery() {
+      try {
+        const res = await fetch("/api/gallery");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && json.data.length > 0) {
+            const mapped = json.data.map((item: any) => ({
+              id: item.id,
+              src: item.image_url,
+              alt: item.alt_text || "Momento Balu",
+              category: item.category || "local",
+            }));
+            setItems(mapped);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load gallery from DB, using fallback static content:", err);
+      }
+    }
+    loadGallery();
+  }, []);
+
+  const filtered = filter === "todos" ? items : items.filter((g) => g.category === filter);
 
   return (
     <section id="galeria" className="py-28 px-6 bg-balu-charcoal/50">
@@ -59,7 +82,7 @@ export default function Gallery() {
         </div>
 
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-          {items.map((item, i) => (
+          {filtered.map((item, i) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, scale: 0.95 }}
