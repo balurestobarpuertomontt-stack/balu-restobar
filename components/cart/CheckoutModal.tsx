@@ -193,9 +193,25 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#25D366] text-white font-semibold rounded-lg hover:opacity-90 transition disabled:opacity-50"
+                  className={`w-full py-3.5 font-semibold rounded-lg hover:opacity-90 transition disabled:opacity-50 ${
+                    payment === "whatsapp"
+                      ? "bg-[#25D366] text-white"
+                      : "bg-balu-gold text-balu-dark"
+                  }`}
                 >
-                  {loading ? "Procesando..." : "Confirmar pedido vía WhatsApp"}
+                  {loading ? "Procesando..." : 
+                    payment === "whatsapp"
+                      ? "Confirmar pedido vía WhatsApp"
+                      : payment === "transferencia"
+                      ? "Confirmar pedido (Transferencia)"
+                      : payment === "stripe"
+                      ? "Pagar con Stripe (Tarjeta)"
+                      : payment === "webpay"
+                      ? "Pagar con Webpay Plus"
+                      : payment === "mercadopago"
+                      ? "Pagar con Mercado Pago"
+                      : "Confirmar pedido"
+                  }
                 </button>
               </div>
             </form>
