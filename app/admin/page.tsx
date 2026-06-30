@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Package, CalendarDays, ShoppingCart, TrendingUp, Lock, Plus, Trash2, Edit, X } from "@/components/ui/Icons";
+import { Package, CalendarDays, ShoppingCart, TrendingUp, Lock, Plus, Trash2, Edit, X, Image, Users } from "@/components/ui/Icons";
 import { formatCLP } from "@/lib/utils";
 import type { MenuItem, MenuCategory } from "@/types";
 
@@ -36,11 +36,29 @@ interface ReservationRow {
 
 const CATEGORIES: MenuCategory[] = ["tablas", "burgers", "sandwiches", "platos", "infantil", "bebidas", "cocteles"];
 
+const EVENT_TYPES = [
+  { id: "musica", label: "Música en Vivo" },
+  { id: "karaoke", label: "Karaoke" },
+  { id: "promo", label: "Promoción" },
+  { id: "deportivo", label: "Transmisión Deportiva" },
+  { id: "otro", label: "Otro" }
+];
+
+const GALLERY_CATEGORIES = [
+  { id: "platos", label: "Platos" },
+  { id: "bebidas", label: "Bebidas" },
+  { id: "local", label: "Local / Ambiente" },
+  { id: "clientes", label: "Clientes" },
+  { id: "eventos", label: "Eventos" },
+  { id: "comidas", label: "Comidas" },
+  { id: "cocteles", label: "Cócteles" }
+];
+
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"products" | "orders" | "reservations" | "stats">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "orders" | "reservations" | "stats" | "events" | "gallery">("products");
   
   // Data States
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -50,6 +68,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncLog, setSyncLog] = useState("");
+
+  // Events & Gallery States
+  const [events, setEvents] = useState<any[]>([]);
+  const [gallery, setGallery] = useState<any[]>([]);
 
   // Product Form State
   const [productFormOpen, setProductFormOpen] = useState(false);
@@ -62,12 +84,51 @@ export default function AdminPage() {
   const [formPopular, setFormPopular] = useState(false);
   const [formActive, setFormActive] = useState(true);
 
+  // Event Form State
+  const [eventFormOpen, setEventFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDesc, setEventDesc] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventType, setEventType] = useState("musica");
+  const [eventImage, setEventImage] = useState("");
+  const [eventActive, setEventActive] = useState(true);
+
+  // Gallery Form State
+  const [galleryFormOpen, setGalleryFormOpen] = useState(false);
+  const [editingGallery, setEditingGallery] = useState<any | null>(null);
+  const [galleryImage, setGalleryImage] = useState("");
+  const [galleryAlt, setGalleryAlt] = useState("");
+  const [galleryCategory, setGalleryCategory] = useState("platos");
+  const [galleryOrder, setGalleryOrder] = useState("0");
+  const [galleryActive, setGalleryActive] = useState(true);
+
   const fetchMenu = useCallback(async () => {
     const res = await fetch("/api/menu");
     if (res.ok) {
       const json = await res.json();
       setMenuItems(json.items ?? []);
       setMenuSource(json.source ?? "static");
+    }
+  }, []);
+
+  const fetchEvents = useCallback(async (adminKey: string) => {
+    const res = await fetch("/api/events", {
+      headers: { "x-admin-key": adminKey },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setEvents(json.data ?? []);
+    }
+  }, []);
+
+  const fetchGallery = useCallback(async (adminKey: string) => {
+    const res = await fetch("/api/gallery", {
+      headers: { "x-admin-key": adminKey },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setGallery(json.data ?? []);
     }
   }, []);
 
@@ -105,7 +166,12 @@ export default function AdminPage() {
 
     if (res.ok) {
       setAuthenticated(true);
-      await Promise.all([fetchMenu(), fetchAdminData(password)]);
+      await Promise.all([
+        fetchMenu(),
+        fetchAdminData(password),
+        fetchEvents(password),
+        fetchGallery(password)
+      ]);
     } else {
       setError("Contraseña incorrecta");
     }
@@ -154,7 +220,7 @@ export default function AdminPage() {
     setFormCategory(item.category);
     setFormImage(item.image || "");
     setFormPopular(item.popular || false);
-    setFormActive(true); // default true for edit unless deleted
+    setFormActive(true); 
     setProductFormOpen(true);
   };
 
@@ -204,6 +270,139 @@ export default function AdminPage() {
     }
   };
 
+  // Event CRUD
+  const openAddEvent = () => {
+    setEditingEvent(null);
+    setEventTitle("");
+    setEventDesc("");
+    setEventDate("");
+    setEventType("musica");
+    setEventImage("");
+    setEventActive(true);
+    setEventFormOpen(true);
+  };
+
+  const openEditEvent = (item: any) => {
+    setEditingEvent(item);
+    setEventTitle(item.title);
+    setEventDesc(item.description || "");
+    setEventDate(item.event_date ? item.event_date.split("T")[0] : "");
+    setEventType(item.event_type);
+    setEventImage(item.image_url || "");
+    setEventActive(item.active !== false);
+    setEventFormOpen(true);
+  };
+
+  const handleSaveEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const eventData = {
+      id: editingEvent?.id || undefined,
+      title: eventTitle,
+      description: eventDesc,
+      event_date: eventDate,
+      event_type: eventType,
+      image_url: eventImage || null,
+      active: eventActive,
+    };
+
+    const method = editingEvent ? "PUT" : "POST";
+    const res = await fetch("/api/events", {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": password,
+      },
+      body: JSON.stringify(eventData),
+    });
+
+    if (res.ok) {
+      setEventFormOpen(false);
+      await fetchEvents(password);
+    } else {
+      alert("Error al guardar el evento.");
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este evento?")) return;
+
+    const res = await fetch(`/api/events?id=${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-key": password },
+    });
+
+    if (res.ok) {
+      await fetchEvents(password);
+    } else {
+      alert("Error al eliminar el evento.");
+    }
+  };
+
+  // Gallery CRUD
+  const openAddGallery = () => {
+    setEditingGallery(null);
+    setGalleryImage("");
+    setGalleryAlt("");
+    setGalleryCategory("platos");
+    setGalleryOrder("0");
+    setGalleryActive(true);
+    setGalleryFormOpen(true);
+  };
+
+  const openEditGallery = (item: any) => {
+    setEditingGallery(item);
+    setGalleryImage(item.image_url);
+    setGalleryAlt(item.alt_text || "");
+    setGalleryCategory(item.category);
+    setGalleryOrder((item.sort_order ?? 0).toString());
+    setGalleryActive(item.active !== false);
+    setGalleryFormOpen(true);
+  };
+
+  const handleSaveGallery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const galleryData = {
+      id: editingGallery?.id || undefined,
+      image_url: galleryImage,
+      alt_text: galleryAlt,
+      category: galleryCategory,
+      sort_order: parseInt(galleryOrder, 10),
+      active: galleryActive,
+    };
+
+    const method = editingGallery ? "PUT" : "POST";
+    const res = await fetch("/api/gallery", {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": password,
+      },
+      body: JSON.stringify(galleryData),
+    });
+
+    if (res.ok) {
+      setGalleryFormOpen(false);
+      await fetchGallery(password);
+    } else {
+      alert("Error al guardar la imagen.");
+    }
+  };
+
+  const handleDeleteGallery = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar esta imagen de la galería?")) return;
+
+    const res = await fetch(`/api/gallery?id=${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-key": password },
+    });
+
+    if (res.ok) {
+      await fetchGallery(password);
+    } else {
+      alert("Error al eliminar la imagen de la galería.");
+    }
+  };
+
   // Order & Reservation Status Changes
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     const order = orders.find((o) => o.id === orderId);
@@ -246,10 +445,16 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (authenticated && activeTab === "products") {
-      fetchMenu();
+    if (authenticated) {
+      if (activeTab === "products") {
+        fetchMenu();
+      } else if (activeTab === "events") {
+        fetchEvents(password);
+      } else if (activeTab === "gallery") {
+        fetchGallery(password);
+      }
     }
-  }, [activeTab, authenticated, fetchMenu]);
+  }, [activeTab, authenticated, password, fetchMenu, fetchEvents, fetchGallery]);
 
   useEffect(() => {
     if (authenticated && (activeTab === "orders" || activeTab === "reservations" || activeTab === "stats")) {
@@ -273,7 +478,10 @@ export default function AdminPage() {
             placeholder="Contraseña"
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-white text-center"
           />
-          {error && <p className="text-balu-red text-center text-sm">{error}</p>}
+                    {error && <p className="text-balu-red text-center text-sm">{error}</p>}
+          <p className="text-xs text-center mt-2">
+            ¿Olvidaste la contraseña? Contacta a <a href="mailto:admin@balu.cl" className="text-balu-gold hover:underline">admin@balu.cl</a>
+          </p>
           <button type="submit" className="w-full py-3 bg-balu-gold text-balu-dark font-semibold rounded-lg hover:bg-balu-gold-light transition">
             Ingresar
           </button>
@@ -285,7 +493,9 @@ export default function AdminPage() {
   const tabs = [
     { id: "products" as const, label: "Productos", icon: Package },
     { id: "orders" as const, label: "Pedidos", icon: ShoppingCart },
-    { id: "reservations" as const, label: "Reservas", icon: CalendarDays },
+    { id: "reservations" as const, label: "Reservas", icon: Users },
+    { id: "events" as const, label: "Eventos", icon: CalendarDays },
+    { id: "gallery" as const, label: "Galería", icon: Image },
     { id: "stats" as const, label: "Estadísticas", icon: TrendingUp },
   ];
 
@@ -296,6 +506,14 @@ export default function AdminPage() {
 
   const pendingOrders = orders.filter((o) => o.status === "pending").length;
   const activeReservations = reservations.filter((r) => r.status === "pending" || r.status === "confirmed").length;
+
+  const salesByPaymentMethod = orders
+    .filter((o) => o.status === "completed" || o.status === "confirmed")
+    .reduce((acc, o) => {
+      const method = o.payment_method || "whatsapp";
+      acc[method] = (acc[method] || 0) + o.total;
+      return acc;
+    }, {} as Record<string, number>);
 
   return (
     <div className="min-h-screen bg-balu-dark text-neutral-200">
@@ -569,6 +787,129 @@ export default function AdminPage() {
             </div>
           )}
 
+          {activeTab === "events" && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-display text-2xl">Eventos ({events.length})</h2>
+                <button
+                  onClick={openAddEvent}
+                  className="flex items-center gap-1 px-4 py-2 bg-balu-gold text-balu-dark font-semibold rounded-lg text-sm hover:bg-balu-gold-light transition"
+                >
+                  <Plus className="h-4 w-4" /> Agregar Evento
+                </button>
+              </div>
+
+              {events.length === 0 ? (
+                <p className="text-neutral-500">No hay eventos registrados aún.</p>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.map((e) => (
+                    <div key={e.id} className={`bg-white/5 border border-white/10 rounded-xl overflow-hidden relative flex flex-col justify-between ${!e.active ? "opacity-50" : ""}`}>
+                      <div>
+                        {e.image_url ? (
+                          <img src={e.image_url} alt={e.title} className="w-full h-40 object-cover" />
+                        ) : (
+                          <div className="w-full h-40 bg-white/5 flex items-center justify-center text-neutral-600 text-xs">Sin imagen</div>
+                        )}
+                        <div className="p-4 space-y-2">
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-xs uppercase px-2 py-0.5 rounded bg-balu-gold/25 text-balu-gold font-medium">
+                              {EVENT_TYPES.find((t) => t.id === e.event_type)?.label || e.event_type}
+                            </span>
+                            <span className="text-xs text-neutral-500 font-medium">
+                              {e.event_date ? e.event_date.split("T")[0] : ""}
+                            </span>
+                          </div>
+                          <h3 className="font-display text-lg font-semibold">{e.title}</h3>
+                          <p className="text-sm text-neutral-400 line-clamp-3">{e.description}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 pt-0">
+                        <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                          <span className="text-xs text-neutral-500">{e.active ? "🟢 Activo" : "🔴 Inactivo"}</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditEvent(e)}
+                              className="p-1.5 border border-white/10 rounded hover:border-balu-gold hover:text-balu-gold transition"
+                              title="Editar"
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEvent(e.id)}
+                              className="p-1.5 border border-white/10 rounded hover:border-balu-red hover:text-balu-red transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "gallery" && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-display text-2xl">Galería ({gallery.length})</h2>
+                <button
+                  onClick={openAddGallery}
+                  className="flex items-center gap-1 px-4 py-2 bg-balu-gold text-balu-dark font-semibold rounded-lg text-sm hover:bg-balu-gold-light transition"
+                >
+                  <Plus className="h-4 w-4" /> Agregar Imagen
+                </button>
+              </div>
+
+              {gallery.length === 0 ? (
+                <p className="text-neutral-500">No hay imágenes en la galería aún.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {gallery.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((item) => (
+                    <div key={item.id} className={`bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-between ${!item.active ? "opacity-50" : ""}`}>
+                      <div>
+                        <img src={item.image_url} alt={item.alt_text || "Foto Galería"} className="w-full h-32 object-cover" />
+                        <div className="p-3 space-y-1">
+                          <div className="flex justify-between text-[10px] text-neutral-500 uppercase font-mono">
+                            <span className="truncate">{item.category}</span>
+                            <span>Orden: {item.sort_order ?? 0}</span>
+                          </div>
+                          {item.alt_text && <p className="text-xs text-neutral-300 truncate">{item.alt_text}</p>}
+                        </div>
+                      </div>
+
+                      <div className="p-3 pt-0">
+                        <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                          <span className="text-[10px] text-neutral-500 font-mono">{item.active ? "🟢 Activa" : "🔴 Inactiva"}</span>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => openEditGallery(item)}
+                              className="p-1 border border-white/10 rounded hover:border-balu-gold hover:text-balu-gold transition"
+                              title="Editar"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteGallery(item.id)}
+                              className="p-1 border border-white/10 rounded hover:border-balu-red hover:text-balu-red transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === "stats" && (
             <div className="space-y-8">
               <h2 className="font-display text-2xl mb-6">Estadísticas</h2>
@@ -587,26 +928,58 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              {/* Custom charts */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="font-display text-lg mb-6">Distribución de Productos por Categoría</h3>
-                <div className="space-y-4">
-                  {CATEGORIES.map((cat) => {
-                    const count = menuItems.filter((p) => p.category === cat).length;
-                    const percent = menuItems.length > 0 ? (count / menuItems.length) * 100 : 0;
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Product Distribution Chart */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h3 className="font-display text-lg mb-6">Distribución de Productos por Categoría</h3>
+                  <div className="space-y-4">
+                    {CATEGORIES.map((cat) => {
+                      const count = menuItems.filter((p) => p.category === cat).length;
+                      const percent = menuItems.length > 0 ? (count / menuItems.length) * 100 : 0;
 
-                    return (
-                      <div key={cat} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="capitalize">{cat}</span>
-                          <span className="text-neutral-400">{count} productos ({percent.toFixed(0)}%)</span>
+                      return (
+                        <div key={cat} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="capitalize">{cat}</span>
+                            <span className="text-neutral-400">{count} productos ({percent.toFixed(0)}%)</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-balu-gold" style={{ width: `${percent}%` }}></div>
+                          </div>
                         </div>
-                        <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-balu-gold" style={{ width: `${percent}%` }}></div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Sales by Payment Method Chart */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h3 className="font-display text-lg mb-6">Ventas por Método de Pago</h3>
+                  <div className="space-y-4">
+                    {Object.entries({
+                      webpay: "Webpay Plus",
+                      mercadopago: "Mercado Pago",
+                      stripe: "Stripe (Tarjeta)",
+                      transferencia: "Transferencia",
+                      whatsapp: "WhatsApp / Efectivo"
+                    }).map(([key, label]) => {
+                      const amount = salesByPaymentMethod[key] || 0;
+                      const maxAmount = Object.values(salesByPaymentMethod).reduce((a, b) => Math.max(a, b), 0) || 1;
+                      const percent = (amount / maxAmount) * 100;
+
+                      return (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>{label}</span>
+                            <span className="text-balu-gold font-medium">{formatCLP(amount)}</span>
+                          </div>
+                          <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-500" style={{ width: `${percent}%` }}></div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -712,6 +1085,191 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setProductFormOpen(false)}
+                  className="px-6 py-3 border border-white/10 rounded-lg hover:bg-white/5 transition text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay Modal for CRUD Event Form */}
+      {eventFormOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="w-full max-w-lg bg-balu-charcoal border border-white/10 rounded-2xl p-6 relative">
+            <button onClick={() => setEventFormOpen(false)} className="absolute top-4 right-4 text-neutral-400 hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="font-display text-xl mb-4">
+              {editingEvent ? "Editar Evento" : "Nuevo Evento"}
+            </h2>
+            <form onSubmit={handleSaveEvent} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              <div>
+                <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Título</label>
+                <input
+                  required
+                  value={eventTitle}
+                  onChange={(e) => setEventTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  placeholder="Ej. Noche de Jazz"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Descripción</label>
+                <textarea
+                  required
+                  value={eventDesc}
+                  onChange={(e) => setEventDesc(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white resize-none"
+                  placeholder="Presentación especial..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Fecha</label>
+                  <input
+                    required
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white font-sans"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Tipo de Evento</label>
+                  <select
+                    value={eventType}
+                    onChange={(e) => setEventType(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  >
+                    {EVENT_TYPES.map((t) => (
+                      <option key={t.id} value={t.id} className="bg-balu-charcoal">{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">URL de la Imagen</label>
+                <input
+                  value={eventImage}
+                  onChange={(e) => setEventImage(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+
+              <div className="flex gap-6 pt-2">
+                <label className="flex items-center gap-2 text-sm text-neutral-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eventActive}
+                    onChange={(e) => setEventActive(e.target.checked)}
+                    className="accent-balu-gold"
+                  />
+                  Activo en Agenda
+                </label>
+              </div>
+
+              <div className="pt-4 flex gap-2">
+                <button type="submit" className="flex-1 py-3 bg-balu-gold text-balu-dark font-semibold rounded-lg hover:bg-balu-gold-light transition text-sm">
+                  Guardar Evento
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEventFormOpen(false)}
+                  className="px-6 py-3 border border-white/10 rounded-lg hover:bg-white/5 transition text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay Modal for CRUD Gallery Form */}
+      {galleryFormOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="w-full max-w-lg bg-balu-charcoal border border-white/10 rounded-2xl p-6 relative">
+            <button onClick={() => setGalleryFormOpen(false)} className="absolute top-4 right-4 text-neutral-400 hover:text-white">
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="font-display text-xl mb-4">
+              {editingGallery ? "Editar Imagen" : "Nueva Imagen"}
+            </h2>
+            <form onSubmit={handleSaveGallery} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              <div>
+                <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">URL de la Imagen</label>
+                <input
+                  required
+                  value={galleryImage}
+                  onChange={(e) => setGalleryImage(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Texto Alternativo (Alt)</label>
+                <input
+                  value={galleryAlt}
+                  onChange={(e) => setGalleryAlt(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  placeholder="Ej. Delicioso postre de chocolate"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Categoría</label>
+                  <select
+                    value={galleryCategory}
+                    onChange={(e) => setGalleryCategory(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                  >
+                    {GALLERY_CATEGORIES.map((c) => (
+                      <option key={c.id} value={c.id} className="bg-balu-charcoal capitalize">{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Orden de Visualización</label>
+                  <input
+                    required
+                    type="number"
+                    value={galleryOrder}
+                    onChange={(e) => setGalleryOrder(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-sm text-white"
+                    placeholder="Ej. 1"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-6 pt-2">
+                <label className="flex items-center gap-2 text-sm text-neutral-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={galleryActive}
+                    onChange={(e) => setGalleryActive(e.target.checked)}
+                    className="accent-balu-gold"
+                  />
+                  Activa en Galería
+                </label>
+              </div>
+
+              <div className="pt-4 flex gap-2">
+                <button type="submit" className="flex-1 py-3 bg-balu-gold text-balu-dark font-semibold rounded-lg hover:bg-balu-gold-light transition text-sm">
+                  Guardar Imagen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGalleryFormOpen(false)}
                   className="px-6 py-3 border border-white/10 rounded-lg hover:bg-white/5 transition text-sm"
                 >
                   Cancelar
