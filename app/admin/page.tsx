@@ -478,10 +478,15 @@ export default function AdminPage() {
             placeholder="Contraseña"
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-balu-gold outline-none text-white text-center"
           />
-                    {error && <p className="text-balu-red text-center text-sm">{error}</p>}
-          <p className="text-xs text-center mt-2">
-            ¿Olvidaste la contraseña? Contacta a <a href="mailto:admin@balu.cl" className="text-balu-gold hover:underline">admin@balu.cl</a>
-          </p>
+          {error && <p className="text-balu-red text-center text-sm">{error}</p>}
+          {forgotMessage && <p className="text-balu-gold text-center text-sm mt-2">{forgotMessage}</p>}
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="w-full py-2 mb-2 bg-balu-gold/70 text-balu-dark font-semibold rounded-lg hover:bg-balu-gold-light transition"
+          >
+            Restablecer contraseña
+          </button>
           <button type="submit" className="w-full py-3 bg-balu-gold text-balu-dark font-semibold rounded-lg hover:bg-balu-gold-light transition">
             Ingresar
           </button>
