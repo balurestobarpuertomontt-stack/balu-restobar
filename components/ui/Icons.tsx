@@ -14,6 +14,16 @@ export function MessageCircle(props: IconProps) {
   return <Icon {...props}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></Icon>;
 }
 
+export function WhatsAppBusiness(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      <path d="M9.5 8h2.5a2 2 0 0 1 0 4h-2.5V8z" />
+      <path d="M9.5 12h3a2 2 0 0 1 0 4h-3v-4z" />
+    </Icon>
+  );
+}
+
 export function Sun(props: IconProps) {
   return <Icon {...props}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></Icon>;
 }

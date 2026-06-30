@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Clock, CalendarDays, Cake, HelpCircle } from "@/components/ui/Icons";
+import { WhatsAppBusiness, X, Clock, CalendarDays, Cake, HelpCircle } from "@/components/ui/Icons";
 import { getQuickWhatsAppUrl } from "@/lib/whatsapp";
 import GlassCard from "./GlassCard";
 
@@ -91,7 +91,7 @@ export default function WhatsAppFloat() {
                 >
                   <div className="p-2 rounded-lg bg-white/5 group-hover:bg-balu-gold/10 text-neutral-400 group-hover:text-balu-gold transition">
                     {/* Render raw icon, falling back to HelpCircle if not custom */}
-                    {opt.icon ? <opt.icon className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+                    {opt.icon ? <opt.icon className="w-5 h-5" /> : <WhatsAppBusiness className="w-5 h-5" />}
                   </div>
                   <div className="flex-1">
                     <h5 className="font-medium text-sm text-neutral-200 group-hover:text-balu-gold transition">
@@ -133,7 +133,7 @@ export default function WhatsAppFloat() {
             : "bg-[#25D366] text-white shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40"
         }`}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-7 w-7" />}
+        {isOpen ? <X className="h-6 w-6" /> : <WhatsAppBusiness className="h-7 w-7" />}
         {!isOpen && (
           <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
         )}
