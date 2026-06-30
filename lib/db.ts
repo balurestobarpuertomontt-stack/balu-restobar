@@ -121,10 +121,10 @@ export async function getProducts(): Promise<any[]> {
       .select("*")
       .order("category")
       .order("name");
-    if (!error && data) return data;
+    if (!error && data) return data.map((d: any) => ({ ...d, image: d.image_url }));
     console.error("Supabase products fetch failed, using local db:", error);
   }
-  return readLocalDB().products;
+  return readLocalDB().products.map((d: any) => ({ ...d, image: d.image_url }));
 }
 
 export async function saveProduct(product: any): Promise<any> {

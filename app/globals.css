@@ -8,8 +8,8 @@
 }
 
 .light {
-  --background: #fafafa;
-  --foreground: #1a1a1a;
+  --background: #f8f9fa;
+  --foreground: #111827;
 }
 
 html {
@@ -21,30 +21,73 @@ body {
   background: var(--background);
 }
 
+/* Sobrescribir colores de fondo para Modo Claro */
 .light body,
 .light .bg-balu-dark {
-  background-color: #fafafa;
+  background-color: #f8f9fa !important;
 }
 
 .light .bg-balu-charcoal,
 .light .bg-balu-charcoal\/50,
-.light .bg-balu-charcoal\/30 {
-  background-color: #f0f0f0;
+.light .bg-balu-charcoal\/30,
+.light .bg-balu-charcoal\/80 {
+  background-color: #ffffff !important;
 }
 
+/* Sobrescribir textos para Modo Claro */
+.light .text-white,
 .light .text-neutral-100 {
-  color: #1a1a1a;
+  color: #111827 !important;
 }
 
-.light .text-neutral-300,
-.light .text-neutral-400,
+.light .text-neutral-200 {
+  color: #374151 !important;
+}
+
+.light .text-neutral-300 {
+  color: #4b5563 !important;
+}
+
+.light .text-neutral-400 {
+  color: #6b7280 !important;
+}
+
 .light .text-neutral-500 {
-  color: #666;
+  color: #9ca3af !important;
 }
 
+/* Sobrescribir bordes translúcidos de blanco a negro */
 .light .border-white\/5,
-.light .border-white\/10 {
-  border-color: rgba(0, 0, 0, 0.08);
+.light .border-white\/10,
+.light .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Sobrescribir fondos translúcidos (inputs, hovers, cards) */
+.light .bg-white\/5,
+.light .bg-white\/10,
+.light .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Ajustar superposiciones (overlays modales y carrito) */
+.light .bg-black\/60,
+.light .bg-black\/70,
+.light .bg-black\/50 {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Gradientes desde oscuro a transparente */
+.light .from-balu-dark {
+  --tw-gradient-from: #f8f9fa var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(248, 249, 250, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.light .to-balu-dark\/0 {
+  --tw-gradient-to: rgba(248, 249, 250, 0) var(--tw-gradient-to-position) !important;
+}
+.light .to-balu-dark {
+  --tw-gradient-to: #f8f9fa var(--tw-gradient-to-position) !important;
 }
 
 ::selection {
