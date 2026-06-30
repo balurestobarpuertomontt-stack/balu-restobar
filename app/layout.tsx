@@ -4,7 +4,6 @@ import "./globals.css";
 import Providers from "@/components/layout/Providers";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import JsonLd from "@/components/seo/JsonLd";
-import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import { SITE } from "@/lib/constants";
 
 const display = Playfair_Display({
@@ -77,7 +76,6 @@ export default function RootLayout({
         className={`${display.variable} ${sans.variable} font-sans antialiased bg-balu-dark text-neutral-100 transition-colors duration-300`}
       >
         <GoogleAnalytics />
-        <ServiceWorkerRegister />
         <Providers>{children}</Providers>
       </body>
     </html>
