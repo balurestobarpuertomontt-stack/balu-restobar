@@ -58,6 +58,7 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"products" | "orders" | "reservations" | "stats" | "events" | "gallery">("products");
   
   // Data States
@@ -175,6 +176,11 @@ export default function AdminPage() {
     } else {
       setError("Contraseña incorrecta");
     }
+  };
+
+  // Handle forgot password button click – shows contact email for password reset
+  const handleForgotPassword = () => {
+    setForgotMessage("Si olvidaste tu contraseña, envía un correo a balurestobarpuertomontt@gmail.com con tu solicitud.");
   };
 
   const handleSyncPrices = async () => {
