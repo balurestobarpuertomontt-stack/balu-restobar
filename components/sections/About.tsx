@@ -37,14 +37,14 @@ export default function About() {
                 className="h-64 rounded-2xl bg-cover bg-center"
                 style={{
                   backgroundImage:
-                    "url('https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80')",
+                    "url('/images/real/interior2.jpg')",
                 }}
               />
               <div
                 className="h-64 rounded-2xl bg-cover bg-center mt-8"
                 style={{
                   backgroundImage:
-                    "url('https://images.unsplash.com/photo-1578474846511-04ba132f124?w=600&q=80')",
+                    "url('/images/real/exterior.jpg')",
                 }}
               />
             </div>

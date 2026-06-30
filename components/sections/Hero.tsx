@@ -24,7 +24,7 @@ export default function Hero() {
           className="absolute inset-0 bg-cover bg-center scale-110"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80')",
+              "url('/images/real/interior.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-balu-dark/70 via-balu-dark/80 to-balu-dark" />

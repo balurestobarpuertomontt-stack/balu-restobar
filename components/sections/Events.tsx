@@ -32,7 +32,7 @@ export default function Events() {
             description: e.description || "",
             date: e.event_date,
             type: e.event_type || "privado",
-            image: e.image_url || "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80",
+            image: e.image_url || "/images/real/design.jpg",
           }));
           setEvents(mapped);
         }

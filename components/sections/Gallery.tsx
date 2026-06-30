@@ -6,15 +6,13 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import type { GalleryItem } from "@/types";
 
 const STATIC_GALLERY: GalleryItem[] = [
-  { id: "1", src: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80", alt: "Tabla de carnes", category: "comidas" },
-  { id: "2", src: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80", alt: "Cócteles", category: "cocteles" },
-  { id: "3", src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80", alt: "Ambiente del local", category: "local" },
-  { id: "4", src: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80", alt: "Burger premium", category: "comidas" },
-  { id: "5", src: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", alt: "Old fashioned", category: "cocteles" },
-  { id: "6", src: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80", alt: "Evento en vivo", category: "eventos" },
-  { id: "7", src: "https://images.unsplash.com/photo-1528607929212-26305ec22053?w=600&q=80", alt: "Clientes disfrutando", category: "clientes" },
-  { id: "8", src: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80", alt: "Bar", category: "local" },
-  { id: "9", src: "https://images.unsplash.com/photo-1535399833047-9de6f81d427?w=600&q=80", alt: "Ceviche", category: "comidas" },
+  { id: "1", src: "/images/real/interior.jpg", alt: "Interior del Restobar", category: "local" },
+  { id: "2", src: "/images/real/dishes.jpg", alt: "Platos destacados", category: "comidas" },
+  { id: "3", src: "/images/real/exterior.jpg", alt: "Fachada Exterior", category: "local" },
+  { id: "4", src: "/images/real/meals.jpg", alt: "Comida deliciosa", category: "comidas" },
+  { id: "5", src: "/images/real/design.jpg", alt: "Diseño del bar", category: "local" },
+  { id: "6", src: "/images/real/food.jpg", alt: "Plato de la casa", category: "comidas" },
+  { id: "7", src: "/images/real/interior2.jpg", alt: "Ambiente", category: "local" },
 ];
 
 const FILTERS = ["todos", "comidas", "cocteles", "clientes", "eventos", "local"] as const;

@@ -34,7 +34,7 @@ const DEFAULT_EVENTS = [
     description: "Trío de jazz con selección de vinos",
     event_date: "2026-07-05",
     event_type: "musica",
-    image_url: "https://images.unsplash.com/photo-1415201364774-f6f0ff5a6827?w=600&q=80",
+    image_url: "/images/real/design.jpg",
     active: true,
   },
   {
@@ -43,7 +43,7 @@ const DEFAULT_EVENTS = [
     description: "Canta tus favoritos con tragos 2x1",
     event_date: "2026-07-10",
     event_type: "karaoke",
-    image_url: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80",
+    image_url: "/images/real/interior2.jpg",
     active: true,
   },
   {
@@ -52,21 +52,19 @@ const DEFAULT_EVENTS = [
     description: "Promoción especial en tablas para compartir",
     event_date: "2026-07-15",
     event_type: "privado",
-    image_url: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80",
+    image_url: "/images/real/meals.jpg",
     active: true,
   },
 ];
 
 const DEFAULT_GALLERY = [
-  { id: "g-1", image_url: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80", alt_text: "Tabla de carnes", category: "comidas", sort_order: 0, active: true },
-  { id: "g-2", image_url: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&q=80", alt_text: "Cócteles", category: "cocteles", sort_order: 1, active: true },
-  { id: "g-3", image_url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80", alt_text: "Ambiente del local", category: "local", sort_order: 2, active: true },
-  { id: "g-4", image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80", alt_text: "Burger premium", category: "comidas", sort_order: 3, active: true },
-  { id: "g-5", image_url: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&q=80", alt_text: "Old fashioned", category: "cocteles", sort_order: 4, active: true },
-  { id: "g-6", image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80", alt_text: "Evento en vivo", category: "eventos", sort_order: 5, active: true },
-  { id: "g-7", image_url: "https://images.unsplash.com/photo-1528607929212-26305ec22053?w=600&q=80", alt_text: "Clientes disfrutando", category: "clientes", sort_order: 6, active: true },
-  { id: "g-8", image_url: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80", alt_text: "Bar", category: "local", sort_order: 7, active: true },
-  { id: "g-9", image_url: "https://images.unsplash.com/photo-1535399833047-9de6f81d427?w=600&q=80", alt_text: "Ceviche", category: "comidas", sort_order: 8, active: true },
+  { id: "g-1", image_url: "/images/real/interior.jpg", alt_text: "Interior del Restobar", category: "local", sort_order: 0, active: true },
+  { id: "g-2", image_url: "/images/real/dishes.jpg", alt_text: "Platos destacados", category: "comidas", sort_order: 1, active: true },
+  { id: "g-3", image_url: "/images/real/exterior.jpg", alt_text: "Fachada Exterior", category: "local", sort_order: 2, active: true },
+  { id: "g-4", image_url: "/images/real/meals.jpg", alt_text: "Comida deliciosa", category: "comidas", sort_order: 3, active: true },
+  { id: "g-5", image_url: "/images/real/design.jpg", alt_text: "Diseño del bar", category: "local", sort_order: 4, active: true },
+  { id: "g-6", image_url: "/images/real/food.jpg", alt_text: "Plato de la casa", category: "comidas", sort_order: 5, active: true },
+  { id: "g-7", image_url: "/images/real/interior2.jpg", alt_text: "Ambiente", category: "local", sort_order: 6, active: true },
 ];
 
 function readLocalDB(): LocalDB {
