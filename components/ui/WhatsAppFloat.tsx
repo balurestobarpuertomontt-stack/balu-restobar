@@ -133,7 +133,7 @@ export default function WhatsAppFloat() {
             : "bg-[#25D366] text-white shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40"
         }`}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <WhatsApp className="h-7 w-7" />}
+        {isOpen ? <X className="h-6 w-6" /> : <WhatsApp className="h-12 w-12" />}
         {!isOpen && (
           <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
         )}
